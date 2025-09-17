@@ -49,6 +49,20 @@ cache:
   port: {{ .Values.cache.openproject.port }}
   password: {{ .Values.cache.openproject.password }}
 
+# PostgreSQL configuration (override embedded chart)
+postgresql:
+  image:
+    registry: {{ (coalesce .Values.container.postgres.registry .Values.container.default.registry) | quote }}
+    repository: {{ .Values.container.postgres.repository | quote }}
+    tag: {{ .Values.container.postgres.tag | quote }}
+
+# Memcached configuration (override embedded chart)
+memcached:
+  image:
+    registry: {{ (coalesce .Values.container.memcached.registry .Values.container.default.registry) | quote }}
+    repository: {{ .Values.container.memcached.repository | quote }}
+    tag: {{ .Values.container.memcached.tag | quote }}
+
 # OIDC configuration
 oidc:
   enabled: true
