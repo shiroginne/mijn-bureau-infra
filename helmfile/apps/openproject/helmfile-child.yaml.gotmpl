@@ -1,0 +1,50 @@
+bases:
+  - "../../bases/default.yaml.gotmpl"
+
+repositories:
+  - name: openproject
+    url: https://charts.openproject.org
+
+  - name: bitnami-postgres
+    oci: {{ .Values.chart.postgresql.oci }}
+    url: "{{ .Values.chart.postgresql.registry | default .Values.chart.default.registry }}/{{ .Values.chart.postgresql.repository }}"
+    verify: {{ .Values.chart.postgresql.verify }}
+    username: {{ .Values.chart.postgresql.username | quote }}
+    password: {{ .Values.chart.postgresql.password | quote }}
+
+  - name: bitnami-memcached
+    oci: {{ .Values.chart.memcached.oci }}
+    url: "{{ .Values.chart.memcached.registry  | default .Values.chart.default.registry  }}/{{ .Values.chart.memcached.repository }}"
+    verify: {{ .Values.chart.memcached.verify }}
+    username: {{ .Values.chart.memcached.username | quote }}
+    password: {{ .Values.chart.memcached.password | quote }}
+
+releases:
+  - name: openproject-postgresql
+    chart: "bitnami-postgres/{{ .Values.chart.postgresql.name }}"
+    version: {{ .Values.chart.postgresql.version | quote }}
+    namespace: {{ .Values.application.openproject.namespace }}
+    installed: {{ and (eq .Environment.Name "demo") ( .Values.application.openproject.enabled) | toYaml }}
+    values:
+      - "values-postgresql.yaml.gotmpl"
+
+  - name: openproject-memcached
+    chart: "bitnami-memcached/{{ .Values.chart.memcached.name }}"
+    version: {{ .Values.chart.memcached.version | quote }}
+    namespace: {{ .Values.application.openproject.namespace }}
+    installed: {{ and (eq .Environment.Name "demo") ( .Values.application.openproject.enabled) | toYaml }}
+    values:
+      - "values-memcached.yaml.gotmpl"
+
+  - name: openproject
+    chart: openproject/openproject
+    version: {{ .Values.chart.openproject.version | quote }}
+    condition: application.openproject.enabled
+    namespace: {{ .Values.application.openproject.namespace }}
+    {{- if and (eq .Environment.Name "demo") ( .Values.application.openproject.enabled) }}
+    needs:
+      - {{ .Values.application.openproject.namespace }}/openproject-postgresql
+      - {{ .Values.application.openproject.namespace }}/openproject-memcached
+    {{- end }}
+    values:
+      - "values.yaml.gotmpl"

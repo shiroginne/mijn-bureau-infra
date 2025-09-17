@@ -1,0 +1,43 @@
+global:
+  security:
+    allowInsecureImages: true
+
+  defaultStorageClass: {{ coalesce .Values.pvc.openproject.memcached.storageClass .Values.pvc.default.storageClass | quote }}
+  storageClass: {{ coalesce .Values.pvc.openproject.memcached.storageClass .Values.pvc.default.storageClass | quote }}
+  imagePullSecrets:
+    - name: {{ (coalesce .Values.container.memcached.imagePullSecret .Values.container.default.imagePullSecret) | quote }}
+
+image:
+  registry: {{ (coalesce .Values.container.memcached.registry .Values.container.default.registry) | quote }}
+  repository: {{ .Values.container.memcached.repository | quote }}
+  tag: {{ .Values.container.memcached.tag | quote }}
+
+auth:
+  enabled: false
+
+resources: {{ .Values.resource.openproject.memcached | toYaml | nindent 2 }}
+
+service:
+  type: ClusterIP
+  sessionAffinity: None
+
+podSecurityContext: {{ .Values.security.default.podSecurityContext | toYaml | nindent 2 }}
+
+containerSecurityContext: {{ .Values.security.default.containerSecurityContext | toYaml | nindent 2 }}
+
+rts:
+  networkPolicy:
+    enabled: true
+    allowExternal: false
+    allowExternalEgress: false
+
+    extraEgress:
+      # Allow DNS resolution
+      - ports:
+          - port: 53
+            protocol: UDP
+        to: []
+      - ports:
+          - port: 53
+            protocol: TCP
+        to: []
